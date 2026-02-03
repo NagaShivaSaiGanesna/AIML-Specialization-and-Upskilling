@@ -1,0 +1,42 @@
+# ollama
+ollama --version 
+i can run this in cmd or here in the terminal as well same thing
+inorder to pull any model i need ollama pull  model name
+
+
+# Venv
+VENV are project specific files we have global env and venv 
+global env is used for gewneric tasks and you would see something like 
+' PS C:\Users\ShivaGanesna\OneDrive - Accordion Partners\Desktop\VSCode> '
+But when you use venv you would see something like (.venv) at the starting
+ 
+python -m venv .venv
+“Create a virtual environment in a folder named .venv inside the current directory.”
+
+
+.\.venv\Scripts\activate
+. at the starts specifies the path of current folder and activates the venv 
+inside the .venv folder of the current folder
+
+Even to create kernals we need to use python -m ipykernel install --user --name=20251208-env --display-name="Python (20251208-env)" 
+
+Also craete seperate kernals for seperate folders
+
+# chatbot
+Ollama - 3 Line Explanation
+Ollama lets you run AI chatbots (like ChatGPT) on your own laptop instead of using the internet.
+It's completely free and private - your conversations stay on your computer.
+Think of it like downloading a movie to watch offline, instead of streaming from Netflix.
+
+How Ollama Works - 3 Lines
+You download an AI model file (like downloading an app) to your computer.
+Ollama runs that model using your laptop's processor/graphics card to generate responses.
+You type questions, it processes them locally, and gives you answers - all without internet.
+
+Why You Need Ollama - 5 Lines
+Running AI models directly requires downloading huge files (50GB+), installing complex software, and writing code.
+Your laptop would run out of memory and it would be extremely slow.
+Ollama compresses the models to 1/4 size, handles all the technical setup automatically, and optimizes for your hardware.
+It's like using VLC to play a movie instead of manually decoding video files with code.
+Without Ollama, you'd spend days setting up what Ollama does in 2 commands.
+

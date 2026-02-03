@@ -1,0 +1,1 @@
+print('Ofcourse this isnt where i imagined id be , but this is  where i choose to rise from')

@@ -1,0 +1,19 @@
+# Python Version & venv
+
+Key lessons:
+    Virtual environments (venv) isolate project dependencies from the global Python environment.
+    Without activating a venv → Python uses the global environment.
+    venvs are locked to the Python version used to create them. You cannot upgrade Python inside an existing venv.
+
+
+Steps to use venv properly:
+
+    Install the desired Python version on your system.
+    Create a venv using that version:
+    python3.11 -m venv venv
+Activate the venv:
+    .\venv\Scripts\activate
+Install project dependencies:
+    pip install requests transformers torch
+Deactivate with:
+    deactivate

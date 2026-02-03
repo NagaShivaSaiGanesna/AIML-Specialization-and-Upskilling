@@ -1,0 +1,66 @@
+
+# token counting and cost estimation
+
+Rule of Thumb:
+
+1 token ≈ 4 characters in English
+100 tokens ≈ 75 words
+1000 tokens ≈ 750 words
+
+OpenAI GPT-4:
+- Input: $0.03 per 1000 tokens
+- Output: $0.06 per 1000 tokens
+
+Claude Sonnet:
+- Input: $0.003 per 1000 tokens  
+- Output: $0.015 per 1000 tokens
+Example:
+
+You send 500 tokens (prompt)
+AI generates 500 tokens (response)
+Cost = (500 × $0.003 + 500 × $0.015) / 1000 = $0.009 per request
+
+
+
+pythoncost = (input_tokens / 1000) * input_price + (output_tokens / 1000) * output_price
+```
+
+**Example calculation:**
+```
+Input: 500 tokens × $0.03/1000 = $0.015
+Output: 800 tokens × $0.06/1000 = $0.048
+Total: $0.063 per conversation turn
+```
+
+---
+
+## **Real-World Example with Your Chatbot**
+
+### **Scenario: Long conversation**
+```
+Turn 1:
+  Input: 50 tokens (system + "Hello")
+  Output: 100 tokens
+  Total: 150 tokens
+  Cost: $0.009
+
+Turn 2: 
+  Input: 200 tokens (system + history + "Explain AI")
+  Output: 500 tokens
+  Total: 700 tokens (cumulative: 850)
+  Cost: $0.036
+
+Turn 3:
+  Input: 800 tokens (system + full history + "More details")
+  Output: 1000 tokens
+  Total: 1800 tokens (cumulative: 2650)
+  Cost: $0.084
+
+Turn 10:
+  Input: 7500 tokens (huge history!)
+  ⚠️ WARNING: Approaching 8192 token limit!
+  Need to truncate history or conversation fails
+
+# System Prompt
+What Are System Prompts?
+System prompts are instructions that tell the AI how to behave - like giving it a personality or role.

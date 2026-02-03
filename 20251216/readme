@@ -1,0 +1,43 @@
+What is NLP:
+
+# Definition:
+NLP stands for Natural Language Processing, a branch of AI that enables computers to understand and process human language.
+
+# Core Purpose:
+It bridges the gap between human communication and machine understanding, making computers interact with text and speech naturally.
+
+# Key Techniques: 
+Uses machine learning, deep learning, and linguistic rules to analyze syntax, semantics, and context in language.
+
+# Common Applications: 
+Powers chatbots, voice assistants, machine translation, sentiment analysis, and search engines.
+
+# Modern Approach: 
+Leverages advanced models like transformers (BERT, GPT) to achieve human-like language understanding and generation.
+
+
+# Core Terminology:
+Corpus: A complete paragraph or collection of text
+Documents/Sentences: Individual sentences within the corpus
+Vocabulary: All unique words in the text (like a dictionary)
+Words: Individual words/tokens in the corpus
+
+Tokenization:
+Definition: The process of breaking text into smaller units (tokens)
+Two Types:
+
+Paragraph → Sentences: Split by delimiters (periods, exclamation marks, etc.)
+Sentences → Words: Break down into individual words
+
+Example:
+
+Text: "I like to drink apple juice. My friend likes mango juice."
+Sentence tokens: 2 sentences
+Word tokens: 11 total words
+Vocabulary: 9-10 unique words (duplicates like "juice" counted once; "like" and "likes" are different)
+
+Why It Matters:
+
+Translation: It converts raw text into numerical values (vectors), which is the only format neural networks can process and mathematically understand.
+
+Efficiency: It breaks complex sentences into manageable units (sub-words or characters), allowing models to handle vast vocabularies and unknown words efficiently.
