@@ -1,1 +1,1 @@
-print("Thid idnt where i imagined i would be at but this is where i choose to rise from ")
+print("This isnt where i imagined i would be at but this is where i choose to rise from ")
