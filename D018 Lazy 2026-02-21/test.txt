@@ -1,0 +1,76 @@
+To test how the professional **Unicode** symbols look in your VS Code editor compared to the LaTeX version, let's recreate the **ANOVA F-Statistic** logic. These symbols are "copy-safe," meaning they will look the same in the raw text editor and the preview window.
+
+# ANOVA Partitioning of Variance (Unicode Version)
+
+The core of ANOVA is dividing the total variation into two components: variance **between** groups and variance **within** groups.
+
+---
+
+## 1. The Statistical Hypotheses
+
+Using Unicode notations, we define our hypotheses as:
+
+* **Null Hypothesis (H₀):** μ₁ = μ₂ = μ₃ = ... = μₖ
+* **Alternate Hypothesis (H₁):** At least one sample mean (x̄) is not equal.
+
+---
+
+## 2. Partitioning the Sum of Squares (SS)
+
+To calculate variance, we first find the **Sum of Squares (SS)**. This represents the total "error" or deviation in the data.
+
+**SS_total = SS_between + SS_within**
+
+### Sum of Squares Between (SS_between)
+
+This measures the spread between the group means.
+
+> **Formula:** Σ nᵢ * (x̄ᵢ - x̄_G)²
+
+* **nᵢ** = Sample size of a specific group.
+* **x̄ᵢ** = Mean of that specific group.
+* **x̄_G** = The Grand Mean (average of all data points).
+
+### Sum of Squares Within (SS_within)
+
+This measures the spread of data points inside each individual group.
+
+> **Formula:** Σ (x - x̄ᵢ)²
+
+---
+
+## 3. Calculating Mean Squares (MS)
+
+To turn these "Sum of Squares" into usable variance values, we divide them by their **Degrees of Freedom (df)**.
+
+1. **Mean Square Between (MS_between):** SS_between / (k - 1)
+2. **Mean Square Within (MS_within):** SS_within / (N - k)
+
+* **k** = Number of groups.
+* **N** = Total number of observations.
+
+---
+
+## 4. The F-Statistic Calculation
+
+The final **F-value** is the ratio of these two Mean Squares.
+
+**F = MS_between / MS_within**
+
+---
+
+## Comparison: Unicode vs. LaTeX
+
+| Feature | Unicode (Above) | LaTeX (Previous) |
+| --- | --- | --- |
+| **Visibility** | Visible in raw text and preview | Only visible in preview |
+| **Portability** | Works in Notepad, VS Code, GitHub | Needs a plugin/renderer |
+| **Look** | Bold and clean | Textbook style |
+
+### Verification Task:
+
+1. **Copy** this response into a new `.md` file in VS Code.
+2. Look at the **raw text** (left side).
+3. Look at the **Preview** (`Ctrl + Shift + V`).
+
+**Which version do you prefer for your permanent notes: the Unicode version (μ, Σ, x̄) or the LaTeX version from the previous message?**
