@@ -203,6 +203,4 @@ Scaled_Value = (Original_Value - Mean) / Standard_Deviation
 - Random Forests
 - Gradient Boosting (XGBoost, LightGBM)
 
-**Why trees don't need it:** Tree algorithms split on thresholds (`Age < 45?`), not on magnitudes. They don't multiply features by weights, so the scale doesn't matter.
-
 ---
