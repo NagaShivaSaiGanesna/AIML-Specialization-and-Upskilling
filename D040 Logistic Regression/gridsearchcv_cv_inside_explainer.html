@@ -1,0 +1,228 @@
+
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; }
+.root { padding: 1rem 0; font-size: 13px; color: var(--color-text-primary); }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.lbl { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px; }
+.param-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; align-items: center; }
+.param-name { font-size: 12px; color: var(--color-text-secondary); width: 60px; flex-shrink: 0; }
+.pill { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; cursor: pointer; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); color: var(--color-text-secondary); transition: all 0.15s; user-select: none; }
+.pill.active { background: #B5D4F4; color: #0C447C; border-color: #378ADD; }
+.pill:hover { border-color: var(--color-border-primary); }
+.combos-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; margin-bottom: 1rem; }
+.combo-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 8px 10px; font-size: 11px; color: var(--color-text-secondary); cursor: pointer; transition: all 0.15s; }
+.combo-card:hover { border-color: var(--color-border-primary); }
+.combo-card.selected { border-color: #378ADD; background: #E6F1FB; color: #0C447C; }
+.combo-card.best { border-color: #1D9E75; background: #E1F5EE; color: #085041; }
+.combo-card .cv { font-size: 13px; font-weight: 500; margin-top: 4px; }
+.fold-strip { display: flex; gap: 3px; margin: 3px 0; }
+.fseg { height: 14px; border-radius: 2px; flex: 1; }
+.fseg-train { background: #B5D4F4; }
+.fseg-test  { background: #9FE1CB; }
+.fseg-active-test { background: #1D9E75; }
+.fold-scores { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.fscore { font-size: 11px; padding: 2px 7px; border-radius: 8px; background: var(--color-background-secondary); color: var(--color-text-secondary); }
+.metric-row { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-bottom: 1rem; }
+.mcard { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+.mcard-lbl { font-size: 11px; color: var(--color-text-secondary); margin: 0 0 3px; }
+.mcard-val { font-size: 18px; font-weight: 500; margin: 0; color: var(--color-text-primary); }
+.best-banner { background: #E1F5EE; border: 0.5px solid #1D9E75; border-radius: var(--border-radius-md); padding: 10px 14px; font-size: 13px; color: #085041; margin-bottom: 1rem; }
+.best-banner span { font-weight: 500; }
+.legend { display: flex; gap: 16px; font-size: 11px; color: var(--color-text-secondary); margin-bottom: 8px; }
+.leg { display: flex; align-items: center; gap: 4px; }
+.leg-box { width: 10px; height: 10px; border-radius: 2px; }
+</style>
+
+<div class="root">
+
+<div class="card">
+  <p class="lbl">Step 1 — choose hyperparameter values to test</p>
+  <div class="param-row">
+    <span class="param-name">alpha (C)</span>
+    <span class="pill active" data-g="alpha" data-v="0.01" onclick="togglePill(this)">0.01</span>
+    <span class="pill active" data-g="alpha" data-v="0.1"  onclick="togglePill(this)">0.1</span>
+    <span class="pill active" data-g="alpha" data-v="1.0"  onclick="togglePill(this)">1.0</span>
+    <span class="pill active" data-g="alpha" data-v="10"   onclick="togglePill(this)">10</span>
+  </div>
+  <div class="param-row">
+    <span class="param-name">fit_intercept</span>
+    <span class="pill active" data-g="fi" data-v="True"  onclick="togglePill(this)">True</span>
+    <span class="pill active" data-g="fi" data-v="False" onclick="togglePill(this)">False</span>
+  </div>
+  <div style="font-size:12px;color:var(--color-text-secondary);margin-top:8px;">
+    Total combinations: <strong id="n-combos" style="color:var(--color-text-primary);">8</strong> &nbsp;|&nbsp;
+    CV folds: <strong style="color:var(--color-text-primary);">5</strong> &nbsp;|&nbsp;
+    Total model fits: <strong id="n-fits" style="color:var(--color-text-primary);">40</strong>
+  </div>
+</div>
+
+<div class="card">
+  <p class="lbl">Step 2 — for each combination, CV runs inside</p>
+  <div class="legend">
+    <span class="leg"><span class="leg-box" style="background:#B5D4F4;"></span>Train fold</span>
+    <span class="leg"><span class="leg-box" style="background:#1D9E75;"></span>Test fold (held out)</span>
+  </div>
+  <div class="combos-wrap" id="combos-wrap"></div>
+  <div style="font-size:12px;color:var(--color-text-secondary);">Click any combination to inspect its fold scores below.</div>
+</div>
+
+<div class="card" id="detail-card">
+  <p class="lbl">Step 3 — inspect selected combination</p>
+  <div id="detail-content">
+    <div style="color:var(--color-text-secondary);font-size:13px;">Select a combination above to see fold-by-fold scores.</div>
+  </div>
+</div>
+
+<div class="card">
+  <p class="lbl">Step 4 — GridSearchCV picks the winner</p>
+  <div class="best-banner" id="best-banner">Calculating...</div>
+  <div class="metric-row" id="metric-row"></div>
+  <button onclick="sendPrompt('Now that GridSearchCV found the best hyperparameters using cross validation, how do I use them to make final predictions?')">How do I use the best params to predict? ↗</button>
+</div>
+
+</div>
+
+<script>
+const X = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
+const Y = X.map(x => 2.3*x + 1.5 + (Math.sin(x*1.3)*2));
+const K = 5;
+
+function linRegRidge(xi, yi, alpha) {
+  const n = xi.length;
+  const mx = xi.reduce((a,b)=>a+b,0)/n;
+  const my = yi.reduce((a,b)=>a+b,0)/n;
+  let num=0, den=0;
+  for(let i=0;i<n;i++){num+=(xi[i]-mx)*(yi[i]-my);den+=(xi[i]-mx)**2;}
+  den += alpha;
+  const slope = num/den;
+  const intercept = my - slope*mx;
+  return {slope, intercept};
+}
+
+function r2score(xi, yi, slope, intercept, useFI) {
+  const ic = useFI ? intercept : 0;
+  const pred = xi.map(x => slope*x + ic);
+  const mean = yi.reduce((a,b)=>a+b,0)/yi.length;
+  let ss_res=0, ss_tot=0;
+  for(let i=0;i<yi.length;i++){ss_res+=(yi[i]-pred[i])**2;ss_tot+=(yi[i]-mean)**2;}
+  return ss_tot===0 ? 1 : 1 - ss_res/ss_tot;
+}
+
+function cvScore(alpha, useFI) {
+  const foldSize = X.length/K;
+  const scores = [];
+  for(let k=0;k<K;k++){
+    const testIdx=[],trainIdx=[];
+    for(let i=0;i<X.length;i++){
+      if(i>=k*foldSize && i<(k+1)*foldSize) testIdx.push(i);
+      else trainIdx.push(i);
+    }
+    const xt=trainIdx.map(i=>X[i]),yt=trainIdx.map(i=>Y[i]);
+    const xv=testIdx.map(i=>X[i]),yv=testIdx.map(i=>Y[i]);
+    const {slope,intercept}=linRegRidge(xt,yt,alpha);
+    scores.push(r2score(xv,yv,slope,intercept,useFI));
+  }
+  return scores;
+}
+
+let alphas = [0.01,0.1,1.0,10];
+let fis = ['True','False'];
+let results = [];
+let selectedIdx = null;
+
+function rebuild() {
+  const activePills = document.querySelectorAll('.pill.active');
+  const selAlphas = [...new Set([...activePills].filter(p=>p.dataset.g==='alpha').map(p=>parseFloat(p.dataset.v)))];
+  const selFis = [...new Set([...activePills].filter(p=>p.dataset.g==='fi').map(p=>p.dataset.v==='True'))];
+  if(selAlphas.length===0||selFis.length===0){
+    document.getElementById('combos-wrap').innerHTML='<div style="color:var(--color-text-secondary);font-size:12px;">Select at least one value per param.</div>';
+    return;
+  }
+  results = [];
+  for(const a of selAlphas) for(const fi of selFis){
+    const scores = cvScore(a, fi);
+    const mean = scores.reduce((s,v)=>s+v,0)/K;
+    results.push({alpha:a, fi, scores, mean});
+  }
+  document.getElementById('n-combos').textContent = results.length;
+  document.getElementById('n-fits').textContent = results.length * K;
+  renderCombos();
+  renderBest();
+  if(selectedIdx !== null && selectedIdx < results.length) renderDetail(selectedIdx);
+  else { selectedIdx=null; document.getElementById('detail-content').innerHTML='<div style="color:var(--color-text-secondary);font-size:13px;">Select a combination above.</div>'; }
+}
+
+function renderCombos() {
+  const bestMean = Math.max(...results.map(r=>r.mean));
+  const wrap = document.getElementById('combos-wrap');
+  wrap.innerHTML = results.map((r,i)=>{
+    const isBest = Math.abs(r.mean - bestMean) < 0.0001;
+    const isSel = i===selectedIdx;
+    const cls = isBest ? 'combo-card best' : (isSel ? 'combo-card selected' : 'combo-card');
+    const foldStrips = Array.from({length:K},(_,k)=>{
+      const foldSize=X.length/K;
+      return Array.from({length:X.length},(_,j)=>{
+        const isTest=(j>=k*foldSize&&j<(k+1)*foldSize);
+        return `<span class="fseg ${isTest?'fseg-active-test':'fseg-train'}"></span>`;
+      }).join('');
+    }).map(s=>`<div class="fold-strip">${s}</div>`).join('');
+    return `<div class="${cls}" onclick="selectCombo(${i})">
+      <div style="font-weight:500;">α=${r.alpha}</div>
+      <div style="color:inherit;">intercept: ${r.fi?'yes':'no'}</div>
+      ${foldStrips}
+      <div class="cv">R²: ${r.mean.toFixed(3)}</div>
+      ${isBest?'<div style="font-size:10px;margin-top:3px;font-weight:500;">best</div>':''}
+    </div>`;
+  }).join('');
+}
+
+function selectCombo(i) {
+  selectedIdx = i;
+  renderCombos();
+  renderDetail(i);
+}
+
+function renderDetail(i) {
+  const r = results[i];
+  const foldSize = X.length/K;
+  let html = `<div style="font-weight:500;margin-bottom:10px;">alpha = ${r.alpha}, fit_intercept = ${r.fi}</div>`;
+  html += r.scores.map((s,k)=>{
+    const pct = Math.max(0,Math.min(100,s*100));
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+      <span style="font-size:11px;color:var(--color-text-secondary);width:44px;">Fold ${k+1}</span>
+      <div style="flex:1;height:16px;background:var(--color-background-secondary);border-radius:3px;overflow:hidden;">
+        <div style="width:${pct.toFixed(1)}%;height:100%;background:#378ADD;border-radius:3px;"></div>
+      </div>
+      <span style="font-size:12px;font-weight:500;width:40px;text-align:right;">${s.toFixed(3)}</span>
+    </div>`;
+  }).join('');
+  const mean = r.scores.reduce((a,b)=>a+b,0)/K;
+  const std = Math.sqrt(r.scores.reduce((a,b)=>a+(b-mean)**2,0)/K);
+  html += `<div style="margin-top:10px;font-size:12px;color:var(--color-text-secondary);">
+    Mean R²: <strong style="color:var(--color-text-primary);">${mean.toFixed(3)}</strong>
+    &nbsp;&nbsp; Std: <strong style="color:var(--color-text-primary);">${std.toFixed(3)}</strong>
+  </div>`;
+  document.getElementById('detail-content').innerHTML = html;
+}
+
+function renderBest() {
+  if(!results.length) return;
+  const best = results.reduce((a,b)=>a.mean>b.mean?a:b);
+  const std = Math.sqrt(best.scores.reduce((a,b,_,arr)=>a+(b-arr.reduce((s,v)=>s+v,0)/arr.length)**2,0)/K);
+  document.getElementById('best-banner').innerHTML =
+    `Best params: <span>alpha = ${best.alpha}</span>, <span>fit_intercept = ${best.fi}</span> &nbsp;—&nbsp; Mean CV R²: <span>${best.mean.toFixed(3)}</span>`;
+  document.getElementById('metric-row').innerHTML = `
+    <div class="mcard"><p class="mcard-lbl">Best mean R²</p><p class="mcard-val">${best.mean.toFixed(3)}</p></div>
+    <div class="mcard"><p class="mcard-lbl">Std dev</p><p class="mcard-val">${std.toFixed(3)}</p></div>
+    <div class="mcard"><p class="mcard-lbl">Combos tried</p><p class="mcard-val">${results.length}</p></div>
+  `;
+}
+
+function togglePill(el) {
+  el.classList.toggle('active');
+  rebuild();
+}
+
+rebuild();
+</script>

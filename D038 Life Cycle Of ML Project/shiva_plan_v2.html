@@ -1,0 +1,366 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.container { padding: 1rem 0; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.tab { padding: 6px 14px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); font-size: 13px; cursor: pointer; background: transparent; color: var(--color-text-secondary); transition: all .15s; }
+.tab.active { background: var(--color-background-secondary); color: var(--color-text-primary); border-color: var(--color-border-primary); font-weight: 500; }
+.section { display: none; }
+.section.active { display: block; }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 12px; }
+.badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 99px; }
+.badge-green { background: var(--color-background-success); color: var(--color-text-success); }
+.badge-amber { background: var(--color-background-warning); color: var(--color-text-warning); }
+.badge-blue { background: var(--color-background-info); color: var(--color-text-info); }
+.badge-red { background: var(--color-background-danger); color: var(--color-text-danger); }
+.row { display: flex; align-items: flex-start; gap: 10px; }
+.time-col { font-size: 12px; color: var(--color-text-secondary); min-width: 76px; margin-top: 2px; }
+.label { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+.sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; line-height: 1.5; }
+.divider { height: 0.5px; background: var(--color-border-tertiary); margin: 10px 0; }
+.metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+.metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+.metric-label { font-size: 11px; color: var(--color-text-secondary); }
+.metric-val { font-size: 20px; font-weight: 500; color: var(--color-text-primary); margin-top: 2px; }
+.metric-unit { font-size: 12px; font-weight: 400; color: var(--color-text-secondary); }
+.meal-block { margin-bottom: 10px; }
+.meal-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+.meal-items { font-size: 12px; color: var(--color-text-secondary); line-height: 1.7; margin-top: 3px; }
+.exercise-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); gap: 8px; }
+.exercise-item:last-child { border-bottom: none; }
+.ex-name { font-size: 13px; font-weight: 500; }
+.ex-spec { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+.tip-box { background: var(--color-background-secondary); border-left: 2px solid var(--color-border-info); border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0; padding: 8px 12px; font-size: 12px; color: var(--color-text-secondary); line-height: 1.6; margin-top: 8px; }
+.warn-box { background: var(--color-background-warning); border-left: 2px solid var(--color-border-warning); border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0; padding: 8px 12px; font-size: 12px; color: var(--color-text-warning); line-height: 1.6; margin-top: 8px; }
+h3 { font-size: 14px; font-weight: 500; margin-bottom: 10px; color: var(--color-text-primary); }
+.block-study { background: var(--color-background-info); border-radius: var(--border-radius-md); padding: 2px 6px; font-size: 11px; color: var(--color-text-info); font-weight: 500; display:inline-block; margin-left:6px; }
+.block-workout { background: var(--color-background-success); border-radius: var(--border-radius-md); padding: 2px 6px; font-size: 11px; color: var(--color-text-success); font-weight: 500; display:inline-block; margin-left:6px; }
+.pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.day-toggle { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
+.day-btn { padding: 4px 10px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); font-size: 12px; cursor: pointer; background: transparent; color: var(--color-text-secondary); }
+.day-btn.active { background: var(--color-background-info); color: var(--color-text-info); border-color: transparent; font-weight: 500; }
+.week-ex { display: none; }
+.week-ex.active { display: block; }
+.protein-alt { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.palt { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; font-size: 12px; color: var(--color-text-secondary); }
+.palt b { font-size: 12px; font-weight: 500; color: var(--color-text-primary); display:block; margin-bottom:2px; }
+</style>
+
+<div class="container">
+  <div style="margin-bottom:1rem;">
+    <div style="font-size:16px;font-weight:500;color:var(--color-text-primary)">Shiva's Plan v2</div>
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-top:3px">Sleep 11:30 PM → 5:00 AM · 4 hrs study weekdays · 6 hrs weekends</div>
+  </div>
+
+  <div class="metric-row">
+    <div class="metric"><div class="metric-label">Target calories</div><div class="metric-val">1,900<span class="metric-unit"> kcal</span></div></div>
+    <div class="metric"><div class="metric-label">Protein goal</div><div class="metric-val">130<span class="metric-unit"> g/day</span></div></div>
+    <div class="metric"><div class="metric-label">Study/week</div><div class="metric-val">32<span class="metric-unit"> hrs</span></div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="show('schedule')">Daily schedule</button>
+    <button class="tab" onclick="show('workout')">Workout plan</button>
+    <button class="tab" onclick="show('diet')">Diet plan</button>
+    <button class="tab" onclick="show('rules')">Key rules</button>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div class="section active" id="schedule">
+    <div class="card">
+      <h3>Weekday (Mon – Fri)</h3>
+
+      <div class="row"><div class="time-col">5:00 AM</div><div><div class="label">Wake up</div><div class="sub">500ml water immediately · quick freshen up</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">5:10 – 6:10</div><div><div class="label">🏋 Workout <span class="block-workout">45 min</span></div><div class="sub">Bodyweight training — warmup + session + cooldown</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">6:10 – 7:00</div><div><div class="label">Morning routine</div><div class="sub">Freshen up, get ready, eat breakfast</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">7:00 AM</div><div><div class="label">Breakfast</div><div class="sub">High protein — pack lunch before leaving</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">8:00 AM</div><div><div class="label">Leave for office</div><div class="sub">Carry dabba + 1L water bottle</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">10:30 AM</div><div><div class="label">Mid-morning snack</div><div class="sub">At desk — quick, high protein</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">1:00 – 2:00</div><div><div class="label">Lunch + study <span class="block-study">1 hr</span></div><div class="sub">Eat in 20 min, study during remaining lunch break</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">4:00 PM</div><div><div class="label">Evening snack</div><div class="sub">Light — keeps hunger away till dinner</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">7:00 PM</div><div><div class="label">Reach home</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">7:00 – 7:30</div><div><div class="label">Freshen up + short walk</div><div class="sub">15 min walk outside — mental reset between office and study</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">7:30 – 8:00</div><div><div class="label">Dinner</div><div class="sub">Rice + curry — normal Telugu dinner, just portion control</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">8:00 – 11:00</div><div><div class="label">📚 Study block <span class="block-study">3 hrs</span></div><div class="sub">AI/ML interview prep — deep focus, phone away</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">11:00 – 11:30</div><div><div class="label">Wind down</div><div class="sub">No screens · light snack if needed · prep for tomorrow</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">11:30 PM</div><div><div class="label">Sleep 😴</div><div class="sub">5.5 hrs — strict. Screens off by 11:15 PM</div></div></div>
+
+      <div class="warn-box">5.5 hrs sleep is short. Compensate: sleep 7–8 hrs on weekends without fail. Chronic sleep debt = fat storage + poor memory = bad for both goals.</div>
+    </div>
+
+    <div class="card">
+      <h3>Weekend (Sat – Sun)</h3>
+      <div class="row"><div class="time-col">6:30 AM</div><div><div class="label">Wake up (slight buffer)</div><div class="sub">Still keep it consistent — no sleeping till noon</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">6:45 – 7:45</div><div><div class="label">🏋 Workout <span class="block-workout">60 min</span></div><div class="sub">Longer session or outdoor jog</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">8:00 – 9:00</div><div><div class="label">Breakfast + relax</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">9:00 – 12:00</div><div><div class="label">📚 Study block 1 <span class="block-study">3 hrs</span></div><div class="sub">Morning brain = best retention</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">12:00 – 1:00</div><div><div class="label">Lunch + break</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">1:00 – 4:00</div><div><div class="label">📚 Study block 2 <span class="block-study">3 hrs</span></div><div class="sub">Revision, mock interviews, projects</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">4:00 – 6:00</div><div><div class="label">Personal time + meal prep</div><div class="sub">Batch cook protein for the week — chicken, dal, boiled eggs</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">6:00 – 7:00</div><div><div class="label">Dinner</div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="time-col">11:00 PM</div><div><div class="label">Sleep — aim for 7.5 hrs</div></div></div>
+    </div>
+
+    <div class="card">
+      <h3>Weekly study hours breakdown</h3>
+      <div class="exercise-item"><div><div class="ex-name">Lunch break at office (Mon–Fri)</div><div class="ex-spec">1 hr × 5 days = 5 hrs</div></div><span class="badge badge-blue">5 hrs</span></div>
+      <div class="exercise-item"><div><div class="ex-name">Evening home block (Mon–Fri)</div><div class="ex-spec">3 hrs × 5 days = 15 hrs</div></div><span class="badge badge-blue">15 hrs</span></div>
+      <div class="exercise-item"><div><div class="ex-name">Weekend blocks (Sat + Sun)</div><div class="ex-spec">6 hrs × 2 days = 12 hrs</div></div><span class="badge badge-blue">12 hrs</span></div>
+      <div class="exercise-item"><div><div class="ex-name">Total per week</div><div class="ex-spec">Well above your 4-hr weekday + 6-hr weekend target</div></div><span class="badge badge-green">32 hrs</span></div>
+    </div>
+  </div>
+
+  <!-- WORKOUT -->
+  <div class="section" id="workout">
+    <div class="card">
+      <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:12px">No equipment · 5 days on, 2 days active rest · 45 min/session</div>
+      <div class="day-toggle">
+        <button class="day-btn active" onclick="showDay('mon')">Mon</button>
+        <button class="day-btn" onclick="showDay('tue')">Tue</button>
+        <button class="day-btn" onclick="showDay('wed')">Wed</button>
+        <button class="day-btn" onclick="showDay('thu')">Thu</button>
+        <button class="day-btn" onclick="showDay('fri')">Fri</button>
+        <button class="day-btn" onclick="showDay('sat')">Sat</button>
+        <button class="day-btn" onclick="showDay('sun')">Sun</button>
+      </div>
+
+      <div class="week-ex active" id="ex-mon">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span class="badge badge-blue">Push day</span><span style="font-size:12px;color:var(--color-text-secondary)">Chest · Shoulders · Triceps</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Push-ups (standard)</div><div class="ex-spec">4 sets × 15 reps</div></div><span class="badge badge-green">Compound</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Wide push-ups</div><div class="ex-spec">3 sets × 12 reps</div></div><span class="badge badge-green">Chest</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Pike push-ups</div><div class="ex-spec">3 sets × 10 reps</div></div><span class="badge badge-amber">Shoulder</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Diamond push-ups</div><div class="ex-spec">3 sets × 8–10 reps</div></div><span class="badge badge-amber">Triceps</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Chair dips</div><div class="ex-spec">3 sets × 12 reps</div></div><span class="badge badge-amber">Triceps</span></div>
+        <div class="tip-box">Rest 60–90 sec between sets. Week 4+: try archer push-ups for progression.</div>
+      </div>
+
+      <div class="week-ex" id="ex-tue">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span class="badge badge-red">Pull day</span><span style="font-size:12px;color:var(--color-text-secondary)">Back · Biceps</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Australian rows (table)</div><div class="ex-spec">4 sets × 10–12 reps</div></div><span class="badge badge-green">Compound</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Superman holds</div><div class="ex-spec">3 sets × 12 reps, 2s hold</div></div><span class="badge badge-green">Lower back</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Reverse snow angels (prone)</div><div class="ex-spec">3 sets × 15 reps</div></div><span class="badge badge-amber">Upper back</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Bicep curls (water bottles)</div><div class="ex-spec">3 sets × 15 reps</div></div><span class="badge badge-amber">Biceps</span></div>
+        <div class="tip-box">Get a pull-up bar (₹500–800 on Amazon) — single biggest upgrade you can make. Replaces Australian rows instantly.</div>
+      </div>
+
+      <div class="week-ex" id="ex-wed">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span class="badge badge-green">Legs + core</span><span style="font-size:12px;color:var(--color-text-secondary)">Quads · Glutes · Hamstrings · Abs</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Bodyweight squats</div><div class="ex-spec">4 sets × 20 reps</div></div><span class="badge badge-green">Compound</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Bulgarian split squats</div><div class="ex-spec">3 sets × 10 reps each leg</div></div><span class="badge badge-red">Hard</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Glute bridges</div><div class="ex-spec">4 sets × 15 reps, 2s hold</div></div><span class="badge badge-amber">Glutes</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Plank</div><div class="ex-spec">3 sets × 45 sec</div></div><span class="badge badge-green">Core</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Bicycle crunches</div><div class="ex-spec">3 sets × 20 reps</div></div><span class="badge badge-green">Core</span></div>
+        <div class="tip-box">Biggest muscle group = most calories burned. Never skip leg day.</div>
+      </div>
+
+      <div class="week-ex" id="ex-thu">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span class="badge badge-blue">Push day 2</span><span style="font-size:12px;color:var(--color-text-secondary)">Variation from Monday</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Decline push-ups (feet elevated)</div><div class="ex-spec">4 sets × 12 reps</div></div><span class="badge badge-green">Upper chest</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Incline push-ups (hands elevated)</div><div class="ex-spec">3 sets × 15 reps</div></div><span class="badge badge-green">Lower chest</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Pike push-ups (slow)</div><div class="ex-spec">3 sets × 10 reps, 3s down</div></div><span class="badge badge-amber">Shoulder</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Tricep overhead extension (bottle)</div><div class="ex-spec">3 sets × 15 reps</div></div><span class="badge badge-amber">Triceps</span></div>
+        <div class="tip-box">Slow the lowering phase — 3 seconds down = twice the muscle stimulus.</div>
+      </div>
+
+      <div class="week-ex" id="ex-fri">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span class="badge badge-red">Full body HIIT</span><span style="font-size:12px;color:var(--color-text-secondary)">Fat burner day</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Jumping jacks</div><div class="ex-spec">4 rounds × 45 sec on / 15 sec off</div></div><span class="badge badge-red">Cardio</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Burpees</div><div class="ex-spec">4 rounds × 30 sec on / 30 sec off</div></div><span class="badge badge-red">Full body</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Mountain climbers</div><div class="ex-spec">3 rounds × 40 sec</div></div><span class="badge badge-red">Core + cardio</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Jump squats</div><div class="ex-spec">3 rounds × 30 sec</div></div><span class="badge badge-amber">Power</span></div>
+        <div class="exercise-item"><div><div class="ex-name">High knees</div><div class="ex-spec">3 rounds × 40 sec</div></div><span class="badge badge-red">Cardio</span></div>
+      </div>
+
+      <div class="week-ex" id="ex-sat">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span class="badge badge-green">Active rest</span><span style="font-size:12px;color:var(--color-text-secondary)">Light movement + recovery</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Brisk walk (outdoor)</div><div class="ex-spec">30–45 min</div></div><span class="badge badge-green">Zone 2 cardio</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Full body stretch</div><div class="ex-spec">15–20 min</div></div><span class="badge badge-green">Recovery</span></div>
+      </div>
+
+      <div class="week-ex" id="ex-sun">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span class="badge badge-amber">Complete rest</span><span style="font-size:12px;color:var(--color-text-secondary)">Grow on rest days</span></div>
+        <div class="exercise-item"><div><div class="ex-name">No structured workout</div><div class="ex-spec">Light walk if you feel like it</div></div><span class="badge badge-green">Recovery</span></div>
+        <div class="exercise-item"><div><div class="ex-name">Sleep 7.5–8 hrs tonight</div><div class="ex-spec">Sunday sleep compensates for weekday 5.5 hrs</div></div><span class="badge badge-green">Priority</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIET -->
+  <div class="section" id="diet">
+    <div class="card">
+      <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:12px">~1,900 kcal · 130g protein · Rice stays — just smarter portions + protein added</div>
+
+      <div class="meal-block">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="meal-title">Pre-workout (5:05 AM)</div>
+          <span class="badge badge-blue">~80 kcal</span>
+        </div>
+        <div class="meal-items">1 small banana OR 4–5 dates OR 2 plain biscuits — just fuel, not a meal</div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="meal-block">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="meal-title">Breakfast (6:45 – 7:00 AM)</div>
+          <span class="badge badge-blue">~400–450 kcal</span>
+        </div>
+        <div class="meal-items">
+          <b>Option A (no egg day):</b> Pesarattu (2–3) + peanut chutney + glass of milk<br>
+          <b>Option B (egg day):</b> 2 eggs bhurji + 2 multigrain bread slices + curd (100g)<br>
+          <b>Option C:</b> Upma (1 cup) + 1 boiled egg + glass of milk<br>
+          <b>Option D:</b> Idli (3) + sambar + curd — classic, high protein if sambar has dal<br>
+          <b>Option E:</b> Oats (1 cup cooked) + milk + handful groundnuts (no banana needed)
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="meal-block">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="meal-title">Mid-morning snack (10:30 AM)</div>
+          <span class="badge badge-green">~120–150 kcal</span>
+        </div>
+        <div class="meal-items">
+          Pick one: roasted chana (handful) · curd (150g) · 1 boiled egg · peanuts (20g) · apple or guava
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="meal-block">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="meal-title">Lunch (1:00 PM) — packed dabba</div>
+          <span class="badge badge-blue">~550 kcal</span>
+        </div>
+        <div class="meal-items">
+          Rice (1 cup cooked — not heaped) + any Telugu curry + one of these proteins:<br><br>
+          <b>Protein options (pick one daily, rotate):</b><br>
+          · Chicken curry / fry (100–120g chicken)<br>
+          · Egg curry (2 eggs)<br>
+          · Chitti pappu / kandi pappu dal (1 katori, thick)<br>
+          · Rajma or chana curry (1 katori)<br>
+          · Palak with paneer or chicken<br>
+          · Fish curry (100g fish)<br><br>
+          Always start lunch with salad (cucumber + tomato) — fills you faster, eat less rice naturally
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="meal-block">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="meal-title">Evening snack (4:00 PM)</div>
+          <span class="badge badge-green">~120 kcal</span>
+        </div>
+        <div class="meal-items">
+          Roasted groundnuts (25g) · OR roasted chana · OR 1 fruit (guava, apple, pear — not mango)<br>
+          Avoid tea biscuits / samosas from canteen — empty calories
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="meal-block">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="meal-title">Dinner (7:30 PM)</div>
+          <span class="badge badge-amber">~500 kcal</span>
+        </div>
+        <div class="meal-items">
+          Rice (1 cup cooked) + sabzi + protein source (same rotation as lunch):<br><br>
+          · Chicken (grilled or curry) — your best dinner protein<br>
+          · Dal + any sabzi (keep rice portion same)<br>
+          · Fish curry + rice<br>
+          · Egg curry (2 eggs) + rice<br>
+          · Paneer curry + rice<br>
+          · Tofu bhurji (if trying something different)<br><br>
+          Keep rice at 1 cup — not more. More sabzi/protein is fine.
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="meal-block">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="meal-title">Late night (optional, only if hungry)</div>
+          <span class="badge badge-green">~80 kcal</span>
+        </div>
+        <div class="meal-items">100–150g curd / buttermilk only — protein before sleep, light on stomach</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Why rice is fine — what to actually watch</h3>
+      <div class="exercise-item"><div><div class="ex-name">Rice is not your enemy</div><div class="ex-spec">1 cup cooked rice = ~200 kcal. Totally fits your 1,900 kcal target. Telugu people have eaten rice forever — it's the portion and the side dishes that matter.</div></div></div>
+      <div class="exercise-item"><div><div class="ex-name">What actually causes fat gain</div><div class="ex-spec">Excess oil in curries, canteen fried snacks, too many rotis, sugary drinks, eating 3 cups rice instead of 1.</div></div></div>
+      <div class="exercise-item"><div><div class="ex-name">The real rule: protein at every meal</div><div class="ex-spec">Dal, chicken, eggs, curd, fish, chana — one of these must appear at every meal. This is the only non-negotiable.</div></div></div>
+      <div class="tip-box">Rotate proteins across the week: Mon chicken, Tue dal, Wed egg curry, Thu rajma, Fri fish, Sat paneer — you'll never feel like you're eating the same thing.</div>
+    </div>
+
+    <div class="card">
+      <h3>Protein sources (all Telugu-friendly)</h3>
+      <div class="protein-alt">
+        <div class="palt"><b>Chicken (best)</b>100g = 27g protein · ~165 kcal</div>
+        <div class="palt"><b>Eggs (2)</b>2 eggs = 12g protein · 140 kcal</div>
+        <div class="palt"><b>Fish</b>100g = 20g protein · 130 kcal</div>
+        <div class="palt"><b>Kandi pappu dal</b>1 cup = 18g protein · 230 kcal</div>
+        <div class="palt"><b>Curd / dahi</b>200g = 7g protein · 120 kcal</div>
+        <div class="palt"><b>Roasted chana</b>30g = 8g protein · 110 kcal</div>
+        <div class="palt"><b>Groundnuts</b>25g = 7g protein · 145 kcal</div>
+        <div class="palt"><b>Paneer</b>50g = 9g protein · 135 kcal</div>
+        <div class="palt"><b>Rajma / chana</b>1 cup = 15g protein · 270 kcal</div>
+        <div class="palt"><b>Milk (full fat)</b>200ml = 7g protein · 130 kcal</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KEY RULES -->
+  <div class="section" id="rules">
+    <div class="card">
+      <h3>Non-negotiables</h3>
+      <div class="exercise-item"><div><div class="ex-name">Protein at every meal, no exceptions</div><div class="ex-spec">Rotate: chicken, dal, eggs, fish, curd, chana, paneer. One must be on every plate.</div></div></div>
+      <div class="exercise-item"><div><div class="ex-name">Rice stays — but 1 cup per meal max</div><div class="ex-spec">Don't cut rice. Eat less rice and more protein + sabzi. That's the switch.</div></div></div>
+      <div class="exercise-item"><div><div class="ex-name">3.5+ litres of water daily</div><div class="ex-spec">Hyderabad heat is real. Carry a bottle always. Dehydration fakes hunger.</div></div></div>
+      <div class="exercise-item"><div><div class="ex-name">Weekend sleep is sacred — 7.5 hrs minimum</div><div class="ex-spec">You're running on 5.5 hrs weekdays. Weekends must compensate or you'll burn out in week 3.</div></div></div>
+      <div class="exercise-item"><div><div class="ex-name">Pack lunch every single day</div><div class="ex-spec">Canteen food kills your diet. One dabba = diet on autopilot. No canteen = no guessing.</div></div></div>
+    </div>
+
+    <div class="card">
+      <h3>90-day roadmap</h3>
+      <div class="exercise-item"><div><div class="ex-name">Month 1 — Build the habit</div><div class="ex-spec">Lose 2–3 kg. Hardest month mentally. Show up even when tired. Routine builds here.</div></div></div>
+      <div class="exercise-item"><div><div class="ex-name">Month 2 — Visible change</div><div class="ex-spec">Lose another 2–3 kg. Clothes fit differently. Increase workout difficulty week by week.</div></div></div>
+      <div class="exercise-item"><div><div class="ex-name">Month 3 — Body recomp</div><div class="ex-spec">Target 68–70 kg. Muscle definition showing. Strength noticeably up. Energy all day.</div></div></div>
+      <div class="tip-box">One cheat meal per week — Sunday lunch. Biryani is fine. One meal won't break anything.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+function showDay(day) {
+  document.querySelectorAll('.week-ex').forEach(d => d.classList.remove('active'));
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('ex-' + day).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
