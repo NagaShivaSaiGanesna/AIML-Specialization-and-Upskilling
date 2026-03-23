@@ -1,0 +1,204 @@
+
+<style>
+* { box-sizing: border-box; }
+.root { padding: 1rem 0; font-size: 13px; color: var(--color-text-primary); }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.lbl { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px; }
+.scenario-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.scen-btn { font-size: 12px; padding: 5px 14px; border-radius: 20px; cursor: pointer; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); color: var(--color-text-secondary); transition: all 0.15s; }
+.scen-btn.active-cancer { background: #FAECE7; color: #712B13; border-color: #D85A30; }
+.scen-btn.active-spam   { background: #E6F1FB; color: #0C447C; border-color: #378ADD; }
+.scen-btn.active-bal    { background: #E1F5EE; color: #085041; border-color: #1D9E75; }
+.scen-desc { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 12px; padding: 8px 12px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); line-height: 1.6; }
+.metric-row { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin-top: 12px; }
+.mc { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; }
+.mc-l { font-size: 11px; color: var(--color-text-secondary); margin: 0 0 2px; }
+.mc-v { font-size: 17px; font-weight: 500; margin: 0; }
+.verdict { margin-top: 10px; border-radius: var(--border-radius-md); padding: 9px 13px; font-size: 12px; line-height: 1.6; }
+.verdict-good { background: var(--color-background-success); color: var(--color-text-success); border: 0.5px solid var(--color-border-success); }
+.verdict-warn { background: var(--color-background-warning); color: var(--color-text-warning); border: 0.5px solid var(--color-border-warning); }
+.code-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 14px; font-size: 12px; font-family: var(--font-mono); color: var(--color-text-secondary); margin-top: 10px; line-height: 1.7; }
+.thresh-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+</style>
+
+<div class="root">
+
+<div class="card">
+  <p class="lbl">Step 1 — pick your business scenario</p>
+  <div class="scenario-row">
+    <button class="scen-btn active-cancer" id="btn-cancer" onclick="setScenario('cancer')">Healthcare / fraud</button>
+    <button class="scen-btn" id="btn-spam"   onclick="setScenario('spam')">Spam filter</button>
+    <button class="scen-btn" id="btn-bal"    onclick="setScenario('bal')">Balanced case</button>
+  </div>
+  <div class="scen-desc" id="scen-desc"></div>
+  <p class="lbl" style="margin-top:10px;">Step 2 — drag to explore thresholds, or let the scenario auto-pick</p>
+  <div class="thresh-row">
+    <span style="font-size:12px;color:var(--color-text-secondary);">Threshold</span>
+    <input type="range" min="1" max="99" value="50" step="1" id="threshSlider" style="flex:1;" oninput="onDrag(this.value)">
+    <span style="font-size:13px;font-weight:500;min-width:36px;" id="threshLbl">0.50</span>
+  </div>
+  <div style="position:relative;width:100%;height:300px;"><canvas id="rocC"></canvas></div>
+  <div class="metric-row" id="metrics"></div>
+  <div class="verdict" id="verdict"></div>
+  <div class="code-box" id="codeBox"></div>
+</div>
+
+<div class="card">
+  <p class="lbl">Step 3 — what you actually do with the threshold</p>
+  <div style="font-size:13px;color:var(--color-text-secondary);line-height:1.7;">
+    Once picked, apply it to override the default 0.5:<br>
+    <span style="font-family:var(--font-mono);font-size:12px;color:var(--color-text-primary);">y_pred = (model.predict_proba(X_test)[:,1] &gt;= threshold).astype(int)</span><br><br>
+    Then re-evaluate with a confusion matrix at this threshold — not AUC.<br>
+    AUC was for <em>comparing models</em>. The threshold is for <em>making decisions</em>.
+  </div>
+  <div style="margin-top:12px;">
+    <button onclick="sendPrompt('Show me how the confusion matrix changes as I move the threshold in logistic regression')">See confusion matrix change with threshold ↗</button>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const PROBS = [0.97,0.91,0.88,0.83,0.79,0.74,0.70,0.65,0.61,0.57,0.53,0.49,0.44,0.40,0.35,0.29,0.23,0.17,0.11,0.05];
+const ACTUALS = [1,1,1,0,1,1,0,1,0,0,1,0,1,0,0,1,0,0,0,0];
+const P_TOT = ACTUALS.filter(v=>v===1).length;
+const N_TOT = ACTUALS.filter(v=>v===0).length;
+
+function confAt(t) {
+  let tp=0,fp=0,fn=0,tn=0;
+  PROBS.forEach((p,i)=>{
+    const pred=p>=t?1:0;
+    if(pred===1&&ACTUALS[i]===1)tp++;
+    else if(pred===1&&ACTUALS[i]===0)fp++;
+    else if(pred===0&&ACTUALS[i]===1)fn++;
+    else tn++;
+  });
+  return {tp,fp,fn,tn};
+}
+function ratesAt(t){
+  const {tp,fp,fn,tn}=confAt(t);
+  return {tpr:P_TOT?tp/P_TOT:0, fpr:N_TOT?fp/N_TOT:0, tp,fp,fn,tn};
+}
+const THRESHOLDS=[1.01,...PROBS,0.0];
+const ROC_PTS=THRESHOLDS.map(t=>{const r=ratesAt(t);return{fpr:r.fpr,tpr:r.tpr,t};});
+
+const SCENARIOS={
+  cancer:{
+    label:'cancer',
+    btnId:'btn-cancer',
+    cls:'active-cancer',
+    desc:'In healthcare or fraud detection, missing a positive (false negative) is far more costly than a false alarm. Priority: maximise TPR even if FPR rises. Move the threshold DOWN — classify more as positive.',
+    targetFn: pts=>pts.reduce((best,p)=>p.tpr>best.tpr||(p.tpr===best.tpr&&p.fpr<best.fpr)?p:best),
+    dotColor:'#D85A30',
+    lineColor:'#D85A30',
+    verdictFn:(tpr,fpr,t)=>tpr>=0.85?
+      {cls:'verdict-good',msg:`Good. TPR = ${(tpr*100).toFixed(0)}% — catching most positives. FPR = ${(fpr*100).toFixed(0)}% means some false alarms, acceptable in this domain.`}:
+      {cls:'verdict-warn',msg:`TPR = ${(tpr*100).toFixed(0)}% is still missing too many positives. Try lowering the threshold further.`}
+  },
+  spam:{
+    label:'spam filter',
+    btnId:'btn-spam',
+    cls:'active-spam',
+    desc:'A spam filter that blocks real emails destroys trust. Priority: keep FPR very low — rarely flag a legitimate email as spam. Move the threshold UP — only classify as spam when very confident.',
+    targetFn: pts=>pts.reduce((best,p)=>p.fpr<best.fpr||(p.fpr===best.fpr&&p.tpr>best.tpr)?p:best),
+    dotColor:'#378ADD',
+    lineColor:'#378ADD',
+    verdictFn:(tpr,fpr,t)=>fpr<=0.15?
+      {cls:'verdict-good',msg:`Good. FPR = ${(fpr*100).toFixed(0)}% — rarely blocking real emails. TPR = ${(tpr*100).toFixed(0)}% means some spam gets through, acceptable trade-off.`}:
+      {cls:'verdict-warn',msg:`FPR = ${(fpr*100).toFixed(0)}% is too high — too many real emails flagged. Raise the threshold.`}
+  },
+  bal:{
+    label:'balanced',
+    btnId:'btn-bal',
+    cls:'active-bal',
+    desc:'When both false positives and false negatives carry similar cost, find the "elbow" — the point on the curve closest to the top-left corner, maximising both TPR and minimising FPR simultaneously.',
+    targetFn: pts=>pts.reduce((best,p)=>{
+      const d=Math.sqrt(p.fpr**2+(1-p.tpr)**2);
+      const db=Math.sqrt(best.fpr**2+(1-best.tpr)**2);
+      return d<db?p:best;
+    }),
+    dotColor:'#1D9E75',
+    lineColor:'#1D9E75',
+    verdictFn:(tpr,fpr,t)=>{
+      const d=Math.sqrt(fpr**2+(1-tpr)**2);
+      return d<0.25?
+        {cls:'verdict-good',msg:`Elbow point found. TPR = ${(tpr*100).toFixed(0)}%, FPR = ${(fpr*100).toFixed(0)}%. This threshold (${t.toFixed(2)}) balances both errors well.`}:
+        {cls:'verdict-warn',msg:`Not quite at the elbow yet. Adjust threshold to get closer to the top-left corner of the curve.`};
+    }
+  }
+};
+
+let currentScenario='cancer';
+let chart=null;
+let autoThresh=null;
+
+function buildChart(){
+  const ctx=document.getElementById('rocC');
+  chart=new Chart(ctx,{
+    type:'scatter',
+    data:{datasets:[
+      {label:'ROC curve',data:ROC_PTS.map(p=>({x:p.fpr,y:p.tpr})),showLine:true,borderColor:'#888780',backgroundColor:'rgba(128,128,128,0.06)',fill:true,pointRadius:3,pointBackgroundColor:'#888780',tension:0},
+      {label:'Random',data:[{x:0,y:0},{x:1,y:1}],showLine:true,borderColor:'#D3D1C7',borderDash:[4,4],pointRadius:0},
+      {label:'Selected',data:[{x:0,y:0}],pointRadius:12,pointBackgroundColor:'#D85A30',pointBorderColor:'#fff',pointBorderWidth:2,showLine:false},
+      {label:'Auto pick',data:[{x:0,y:0}],pointRadius:8,pointBackgroundColor:'transparent',pointBorderColor:'#D85A30',pointBorderWidth:2,pointStyle:'rectRot',showLine:false}
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>{
+        if(i.datasetIndex===0){const pt=ROC_PTS[i.dataIndex];return `thresh ${pt.t<=1?pt.t.toFixed(2):'1.0'} | TPR ${(i.parsed.y*100).toFixed(0)}% | FPR ${(i.parsed.x*100).toFixed(0)}%`;}
+        return '';
+      }}}},
+      scales:{
+        x:{min:0,max:1,title:{display:true,text:'False Positive Rate (FPR)',color:'#888'},ticks:{color:'#888'},grid:{color:'rgba(128,128,128,0.08)'}},
+        y:{min:0,max:1,title:{display:true,text:'True Positive Rate (TPR)',color:'#888'},ticks:{color:'#888'},grid:{color:'rgba(128,128,128,0.08)'}}
+      }
+    }
+  });
+}
+
+function setScenario(s){
+  currentScenario=s;
+  ['cancer','spam','bal'].forEach(k=>{
+    const b=document.getElementById('btn-'+k);
+    b.className='scen-btn'+(k===s?' '+SCENARIOS[k].cls:'');
+  });
+  const sc=SCENARIOS[s];
+  document.getElementById('scen-desc').textContent=sc.desc;
+  autoThresh=sc.targetFn(ROC_PTS.filter(p=>p.t<=1));
+  const sliderVal=Math.round(autoThresh.t*100);
+  document.getElementById('threshSlider').value=sliderVal;
+  chart.data.datasets[2].pointBackgroundColor=sc.dotColor;
+  chart.data.datasets[3].pointBorderColor=sc.dotColor;
+  chart.data.datasets[3].data=[{x:autoThresh.fpr,y:autoThresh.tpr}];
+  updateDisplay(autoThresh.t);
+}
+
+function onDrag(v){
+  updateDisplay(v/100);
+}
+
+function updateDisplay(t){
+  document.getElementById('threshLbl').textContent=t.toFixed(2);
+  const closest=ROC_PTS.reduce((best,p)=>Math.abs(p.t-t)<Math.abs(best.t-t)?p:best);
+  chart.data.datasets[2].data=[{x:closest.fpr,y:closest.tpr}];
+  chart.update('none');
+  const {tpr,fpr,tp,fp,fn,tn}=ratesAt(t);
+  const prec=tp+fp>0?tp/(tp+fp):0;
+  document.getElementById('metrics').innerHTML=`
+    <div class="mc"><p class="mc-l">Threshold</p><p class="mc-v">${t.toFixed(2)}</p></div>
+    <div class="mc"><p class="mc-l">TPR (recall)</p><p class="mc-v">${(tpr*100).toFixed(0)}%</p></div>
+    <div class="mc"><p class="mc-l">FPR</p><p class="mc-v">${(fpr*100).toFixed(0)}%</p></div>
+    <div class="mc"><p class="mc-l">Precision</p><p class="mc-v">${(prec*100).toFixed(0)}%</p></div>
+  `;
+  const sc=SCENARIOS[currentScenario];
+  const v=sc.verdictFn(tpr,fpr,t);
+  document.getElementById('verdict').className='verdict '+v.cls;
+  document.getElementById('verdict').textContent=v.msg;
+  document.getElementById('codeBox').innerHTML=
+    `<span style="color:var(--color-text-tertiary)"># apply your chosen threshold</span>\nthreshold = ${t.toFixed(2)}\ny_pred = (model_prob >= threshold).astype(int)`;
+}
+
+buildChart();
+setScenario('cancer');
+</script>
