@@ -1,0 +1,169 @@
+# Docker Images, Containers & Virtual Machines: A Complete Study Guide
+
+---
+
+## Part 1: How Docker Images Are Built — The Layer System
+
+A Docker image is not a single monolithic file. It is a **stack of read-only layers**, where each layer represents one piece of your application's environment.
+
+Think of it like a cake:
+
+```
+┌─────────────────────────────┐
+│     Your Application Code   │  ← top layer
+├─────────────────────────────┤
+│     Anaconda / pip libs     │
+├─────────────────────────────┤
+│        Python 3.x           │
+├─────────────────────────────┤
+│     MongoDB / MySQL         │
+├─────────────────────────────┤
+│   Linux Base Image (tiny)   │  ← bottom layer (base image)
+└─────────────────────────────┘
+```
+
+Each layer only stores the **diff** — the changes it adds on top of the layer below it. This is why Docker images are compact and why builds are fast (unchanged layers are cached and reused).
+
+### Your Lambda Dockerfile in This Mental Model
+
+Your Dockerfile from the previous discussion maps perfectly onto this:
+
+```
+┌─────────────────────────────────────┐
+│  CMD: main.lambda_handler           │  ← entry point layer
+├─────────────────────────────────────┤
+│  ENV variables (REGION, TABLE etc.) │
+├─────────────────────────────────────┤
+│  COPY main.py + CSV                 │  ← your application code
+├─────────────────────────────────────┤
+│  RUN pip install -r requirements    │  ← your dependencies
+├─────────────────────────────────────┤
+│  public.ecr.aws/lambda/python:3.12  │  ← AWS base image (bottom)
+└─────────────────────────────────────┘
+```
+
+---
+
+## Part 2: Docker Image vs. Docker Container
+
+This is one of the most commonly confused distinctions in Docker. Here is the clean mental model:
+
+$$\text{Docker Image} \xrightarrow{\texttt{docker run}} \text{Docker Container}$$
+
+| | **Docker Image** | **Docker Container** |
+|---|---|---|
+| **What it is** | A static, packaged artifact — all layers stacked together | A live, running instance of that image |
+| **State** | Inert — sits on disk, does nothing | Active — consumes CPU and memory |
+| **Shareable?** | Yes — push to ECR, Docker Hub, etc. | No — runs on a specific host |
+| **Analogy** | A blueprint / recipe / `.exe` file | The running process / the built house |
+| **OOP equivalent** | A **Class** definition | An **Object** (instance of the class) |
+
+$$\text{Class (Image)} \xrightarrow{\text{instantiate}} \text{Object (Container)}$$
+
+### What Happens When You Run an Image
+
+When you execute `docker run <image>`:
+
+1. Docker reads all the stacked layers of the image
+2. It creates an isolated **container environment** on your host machine
+3. All dependencies defined in the image are available inside that environment
+4. Your application starts **within** that environment
+5. When the process exits, the container stops (but the image remains untouched)
+
+One image can spawn **many containers simultaneously** — each isolated from the others.
+
+---
+
+## Part 3: Docker vs. Virtual Machines
+
+To understand the difference, you first need to understand how an operating system is structured.
+
+### How an OS Is Structured
+
+Every operating system has two fundamental layers:
+
+```
+┌──────────────────────────┐
+│     Application Layer    │  ← Layer 2: UI, apps, shell, utilities
+├──────────────────────────┤
+│      OS Kernel Layer     │  ← Layer 1: communicates with hardware
+├──────────────────────────┤
+│        Hardware          │  (CPU, RAM, Storage)
+└──────────────────────────┘
+```
+
+- The **kernel** is the core — it talks directly to hardware. It manages memory, processes, and I/O.
+- The **application layer** is everything on top — the UI, shell, installed programs, etc.
+
+This is why different Linux distributions (Ubuntu, Red Hat, Fedora) *feel* different but share the same kernel — their application layers differ, but the underlying kernel is essentially the same.
+
+---
+
+### What Each Technology Virtualizes
+
+Here is the critical architectural difference:
+
+```
+┌─────────────────────────────┐     ┌─────────────────────────────┐
+│         DOCKER              │     │      VIRTUAL MACHINE        │
+├─────────────────────────────┤     ├─────────────────────────────┤
+│  Container Application      │     │  Guest Application Layer    │
+│  Layer (virtualized)        │     ├─────────────────────────────┤
+│                             │     │  Guest OS Kernel            │
+│  ↕ communicates with ↕      │     │  (its own, fully separate)  │
+│                             │     │                             │
+│  Host OS Kernel (shared)    │     │  Host OS Kernel             │
+└─────────────────────────────┘     └─────────────────────────────┘
+```
+
+- **Docker** virtualizes only the **application layer** and talks directly to the *host's* OS kernel.
+- **VMs** virtualize **both layers** — they carry their own complete OS kernel, making them a fully self-contained subsystem running inside your host OS.
+
+---
+
+### Detailed Comparison: Docker vs. VM
+
+| Property | Docker Container | Virtual Machine |
+|---|---|---|
+| **What it virtualizes** | Application layer only | Application layer + OS Kernel |
+| **Image / Snapshot size** | Small — typically **megabytes** | Large — typically **gigabytes** |
+| **Startup speed** | Very fast — seconds | Slow — minutes |
+| **Resource overhead** | Low — shares host kernel | High — needs dedicated RAM, CPU, disk |
+| **Isolation level** | Process-level isolation | Full OS-level isolation |
+| **Compatibility** | Can have issues (see below) | Runs on any host OS — no issues |
+| **Best for** | Microservices, CI/CD, cloud deployments | Running a completely different OS, legacy systems |
+
+---
+
+### The Compatibility Caveat for Docker
+
+Because Docker containers share the host OS kernel, a container must be **compatible with the host's kernel**.
+
+In practice, this mostly matters for **Windows hosts running Linux containers**:
+
+```
+Linux Docker Image
+        │
+        ▼
+Needs Linux Kernel to run
+        │
+        ▼
+Windows 10+ → WSL2 provides a Linux kernel → ✅ Works
+Windows 7/8 → No Linux kernel support       → ❌ Fails
+```
+
+Modern Windows 10 and above ship with **WSL2 (Windows Subsystem for Linux 2)**, which embeds a real Linux kernel — so Linux containers work fine. This compatibility gap is largely a non-issue today, but it's a classic interview question.
+
+VMs have no such problem — since they carry their *own* kernel, a Linux VM runs perfectly on a Windows host and vice versa.
+
+---
+
+## Summary: The Three Key Takeaways
+
+| Concept | One-Line Takeaway |
+|---|---|
+| **Docker Image** | A portable, layered, static package of your app + all its dependencies |
+| **Docker Container** | A live, running environment spawned from an image |
+| **Docker vs. VM** | Docker is lighter and faster because it virtualizes only the application layer; VMs are heavier but fully OS-independent |
+
+> **Connecting this to your Lambda work:** When AWS Lambda pulled your image from ECR and ran it, it was spinning up a **container** from your **image** — giving it an isolated application environment backed by AWS's own Linux kernel underneath. You never touched the kernel — Docker handled all of that transparently.

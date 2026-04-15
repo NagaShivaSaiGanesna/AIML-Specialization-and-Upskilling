@@ -1,0 +1,229 @@
+# Docker Commands: Pull, Run & Manage Containers
+
+---
+
+## The Core Workflow
+
+Every time you work with Docker, you follow the same fundamental flow:
+
+```
+Docker Hub (Registry)
+        │
+        │  docker pull
+        ▼
+  Docker Image (on your machine)
+        │
+        │  docker run
+        ▼
+  Docker Container (running environment)
+        │
+        │  docker stop
+        ▼
+  Container Stopped (image still exists)
+```
+
+---
+
+## Essential Commands Reference
+
+### Checking Your Installation
+```bash
+docker -v
+# Returns: Docker version 20.10.x — confirms Docker is installed and working
+```
+
+---
+
+### Pulling an Image from Docker Hub
+```bash
+docker pull docker/getting-started
+```
+- Downloads the image from Docker Hub to your local machine
+- You'll see **multiple layers downloading** — this is the layered image system in action
+- Each layer is a separate dependency, pulled and cached independently
+
+> **Key point:** `docker pull` only downloads. It does NOT run anything yet.
+
+---
+
+### Listing Downloaded Images
+```bash
+docker images
+```
+Output looks like:
+```
+REPOSITORY              TAG       IMAGE ID       SIZE
+docker/getting-started  latest    abc123def456   28.8MB
+hello-world             latest    feb5d9fea6a5   13.3kB
+```
+
+---
+
+### Running an Image as a Container
+```bash
+docker run -d -p 80:80 docker/getting-started
+```
+
+Breaking down every flag:
+
+| Flag | Full Meaning | What It Does |
+|---|---|---|
+| `docker run` | — | Tells Docker to create and start a container from an image |
+| `-d` | Detached mode | Runs the container in the background — frees your terminal |
+| `-p 80:80` | Port mapping | Maps host port 80 → container port 80 |
+| `docker/getting-started` | Image name | The image to use |
+
+If the image isn't found locally, `docker run` **automatically pulls it first** — so `docker pull` is optional if you're going to run anyway.
+
+---
+
+## Port Mapping — The Most Important Concept Here
+
+This confuses many beginners. Here is the clean mental model:
+
+```
+Your Host Machine (Windows/Mac/Linux)
+┌─────────────────────────────────────────┐
+│                                         │
+│   localhost:80  ──────────────────────┐ │
+│                                       │ │
+│   ┌─── Container Environment ───────┐ │ │
+│   │                                 │ │ │
+│   │   App running on port 80  ◄─────┘ │ │
+│   │                                   │ │
+│   └───────────────────────────────────┘ │
+└─────────────────────────────────────────┘
+```
+
+The container is an **isolated environment** — it has its own internal network. To reach the app running inside it, you must create a **bridge** between a port on your host and a port inside the container.
+
+```bash
+-p HOST_PORT:CONTAINER_PORT
+-p 80:80       # host port 80 talks to container port 80
+-p 5000:80     # host port 5000 talks to container port 80
+-p 8080:3000   # host port 8080 talks to container port 3000
+```
+
+### Running Multiple Containers — Port Rules
+
+You can run as many containers as you want simultaneously, but **host ports must be unique**. Container ports can repeat freely.
+
+```
+Host Machine
+├── localhost:80    ──►  Container A (app on port 80)
+├── localhost:5000  ──►  Container B (app on port 80)   ✅ valid
+└── localhost:8080  ──►  Container C (app on port 3000) ✅ valid
+
+# You CANNOT do:
+├── localhost:80    ──►  Container A
+└── localhost:80    ──►  Container B   ❌ port conflict on host
+```
+
+---
+
+### Checking Running Containers
+```bash
+docker ps
+```
+Shows only **currently running** containers with their IDs, image names, ports, and uptime.
+
+```bash
+docker ps -a
+```
+Shows **all containers** — including stopped ones. Useful for debugging.
+
+---
+
+### Stopping a Container
+```bash
+docker stop <container_id>
+```
+- Gracefully stops the running container
+- The **image is untouched** — it still exists on your machine
+- You can restart it or run a fresh container from the same image anytime
+
+---
+
+### Removing an Image
+```bash
+docker image remove <image_id>
+
+# If it errors due to linked container history, force it:
+docker image remove -f <image_id>
+```
+
+> **Why the error?** Even after stopping a container, Docker keeps metadata linking it to the image. You either remove the container first (`docker rm <container_id>`) or force-remove the image.
+
+---
+
+## Image Tags — Pinning Specific Versions
+
+On Docker Hub, every image can have multiple **tags** — think of tags as version labels.
+
+```bash
+docker pull redis          # pulls "latest" tag by default
+docker pull redis:7.2      # pulls specifically version 7.2
+docker pull redis:bullseye # pulls a Debian Bullseye-based variant
+```
+
+This maps directly to what you did in your Lambda project:
+```dockerfile
+FROM public.ecr.aws/lambda/python:3.12
+#                                 ^^^^
+#                              This is the tag — Python 3.12 specifically
+```
+
+If you had written `FROM public.ecr.aws/lambda/python` with no tag, Docker would have pulled `latest` — which could change unexpectedly. **Always pin tags in production.**
+
+---
+
+## The `hello-world` Container — What It Teaches You
+
+```bash
+docker run hello-world
+```
+
+This is the simplest possible container. It:
+1. Prints a message explaining what just happened
+2. **Exits immediately** — it has no long-running process
+
+After running it, `docker ps` shows nothing — but `docker ps -a` shows it in an **exited** state, and `docker images` confirms the image is still cached locally.
+
+This illustrates an important point: **a container only lives as long as its main process runs.** Web servers run indefinitely; a hello-world script exits in milliseconds.
+
+---
+
+## Connecting This to Your Lambda Work
+
+Your ECR + Lambda workflow was exactly this pattern, just on AWS infrastructure:
+
+| Local Docker | Your Lambda Setup |
+|---|---|
+| `docker pull` from Docker Hub | Lambda pulls your image from **ECR** |
+| `docker run -d` | Lambda **runs your container** on invocation |
+| `-p 80:80` port mapping | Lambda handles networking — exposes your function via its own endpoint |
+| `docker stop` | Lambda tears down the container after execution |
+| `docker images` | ECR stores and versions your images |
+
+The only difference: on your laptop you manage containers manually. On AWS Lambda, the entire lifecycle — pull, run, stop, scale — is managed automatically by AWS.
+
+---
+
+## Quick Reference Cheat Sheet
+
+```bash
+docker -v                          # check Docker version
+docker images                      # list all local images
+docker ps                          # list running containers
+docker ps -a                       # list all containers (inc. stopped)
+
+docker pull <image>                # download image from Docker Hub
+docker run <image>                 # run image as container (foreground)
+docker run -d <image>              # run in detached (background) mode
+docker run -d -p HOST:CONTAINER <image>  # run with port mapping
+
+docker stop <container_id>         # gracefully stop a container
+docker rm <container_id>           # remove a stopped container
+docker image remove <image_id>     # delete an image
+docker image remove -f <image_id>  # force delete (bypasses link errors)
+```
